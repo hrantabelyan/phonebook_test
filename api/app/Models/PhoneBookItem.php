@@ -10,6 +10,17 @@ class PhoneBookItem extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'first_name',
+        'last_name',
+        'country_code',
+    ];
+
     public function numbers()
     {
         return $this->hasMany(PhoneBookItemNumber::class, 'phone_book_item_id');

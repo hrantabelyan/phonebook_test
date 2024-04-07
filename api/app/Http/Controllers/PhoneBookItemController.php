@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePhoneBookItemRequest;
 use App\Http\Requests\UpdatePhoneBookItemRequest;
+use App\Http\Resources\PhoneBookItemResource;
 use App\Models\PhoneBookItem;
+use Illuminate\Support\Facades\DB;
 
 class PhoneBookItemController extends Controller
 {
@@ -21,7 +23,41 @@ class PhoneBookItemController extends Controller
      */
     public function store(StorePhoneBookItemRequest $request)
     {
-        //
+        DB::beginTransaction();
+
+        try {
+            $phoneBookItem = PhoneBookItem::create($request->only([
+                'first_name',
+                'last_name',
+                'country_code',
+            ]));
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger($e);
+            return $this->respondError(__('Could not create the item'));
+        }
+
+        try {
+            foreach ($request->phone_numbers as $phoneNumber) {
+                $phoneBookItem->numbers()->create([
+                    'number' => $phoneNumber,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger($e);
+            return $this->respondError(__('Could not add the phone number'));
+        }
+
+        try {
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger($e);
+            return $this->respondError(__('Could not insert to database'));
+        }
+
+        return $this->respondCreated(new PhoneBookItemResource($phoneBookItem));
     }
 
     /**
