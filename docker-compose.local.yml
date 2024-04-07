@@ -1,0 +1,58 @@
+version: "3.4"
+
+services:
+  phonebook_test_database:
+    image: mysql
+    container_name: phonebook_test_db
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password --init-file /data/application/init.sql
+    environment:
+      MYSQL_DATABASE: 'phonebook_test'
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - ${DB_HOST_PATH}:/var/lib/mysql
+      - ./docker/mysql/init.sql:/data/application/init.sql
+    ports:
+      - ${DB_HOST_PORT}:3306
+    networks:
+      - api
+
+  phonebook_test_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: phonebook_test_nginx
+    container_name: phonebook_test_api
+    ports:
+      - ${NGINX_HOST_PORT}:80
+    links:
+      - phonebook_test_php
+    volumes:
+      - ./api:/var/www/phonebook_test
+    depends_on:
+      - phonebook_test_php
+    networks:
+      - api
+
+  phonebook_test_php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: phonebook_test_php
+    container_name: phonebook_test_php
+    volumes:
+      - ./api:/var/www/phonebook_test
+    depends_on:
+      - phonebook_test_database
+    environment:
+      DB_HOST: phonebook_test_database
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_DATABASE: phonebook_test
+      DB_PASSWORD: ${DB_ROOT_PASSWORD}
+    networks:
+      - api
+
+networks:
+  api:
+    driver: bridge
