@@ -3,6 +3,7 @@
 namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Support\Facades\Cache;
 use GuzzleHttp\Client;
 
 class Timezone implements Rule
@@ -26,6 +27,27 @@ class Timezone implements Rule
      */
     public function passes($attribute, $value)
     {
+        return in_array($value, $this->getTimezones());
+    }
+
+    /**
+     * Get the validation error message.
+     *
+     * @return string
+     */
+    public function message()
+    {
+        return __('The :attribute field must be a valid time zone.');
+    }
+
+    private function getTimezones(): array
+    {
+        $cacheKey = 'timezones_api_response';
+
+        if (Cache::has($cacheKey)) {
+            return Cache::get($cacheKey);
+        }
+
         try {
             $client = new Client([
                 'verify' => false,
@@ -65,16 +87,8 @@ class Timezone implements Rule
             return false;
         }
 
-        return in_array($value, $timezones);
-    }
+        Cache::put($cacheKey, $timezones, 3600 * 24); // caching for 24 hours
 
-    /**
-     * Get the validation error message.
-     *
-     * @return string
-     */
-    public function message()
-    {
-        return __('The :attribute field must be a valid time zone.');
+        return $timezones;
     }
 }

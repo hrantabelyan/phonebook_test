@@ -3,6 +3,7 @@
 namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Support\Facades\Cache;
 use GuzzleHttp\Client;
 
 class CountryCode implements Rule
@@ -26,6 +27,27 @@ class CountryCode implements Rule
      */
     public function passes($attribute, $value)
     {
+        return in_array(mb_strtoupper($value), $this->getCountryCodes());
+    }
+
+    /**
+     * Get the validation error message.
+     *
+     * @return string
+     */
+    public function message()
+    {
+        return __('The :attribute field must be a valid country code.');
+    }
+
+    private function getCountryCodes(): array
+    {
+        $cacheKey = 'country_codes_api_response';
+
+        if (Cache::has($cacheKey)) {
+            return Cache::get($cacheKey);
+        }
+
         try {
             $client = new Client([
                 'verify' => false,
@@ -66,16 +88,8 @@ class CountryCode implements Rule
             return false;
         }
 
-        return in_array(mb_strtoupper($value), $countryCodes);
-    }
+        Cache::put($cacheKey, $countryCodes, 3600 * 24); // caching for 24 hours
 
-    /**
-     * Get the validation error message.
-     *
-     * @return string
-     */
-    public function message()
-    {
-        return __('The :attribute field must be a valid country code.');
+        return $countryCodes;
     }
 }
