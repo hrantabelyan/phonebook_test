@@ -65,7 +65,7 @@ class StorePhoneBookItemRequest extends ApiRequest
     {
         if ($this->has('country_code')) {
             $this->merge([
-                'country_code' => mb_strtolower($this->input('country_code')),
+                'country_code' => mb_strtoupper($this->input('country_code')),
             ]);
         }
 

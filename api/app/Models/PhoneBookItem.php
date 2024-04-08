@@ -19,6 +19,7 @@ class PhoneBookItem extends Model
         'first_name',
         'last_name',
         'country_code',
+        'timezone',
     ];
 
     public function numbers()
