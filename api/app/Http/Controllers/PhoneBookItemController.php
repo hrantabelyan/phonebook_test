@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePhoneBookItemRequest;
 use App\Http\Requests\UpdatePhoneBookItemRequest;
+use App\Http\Resources\PhoneBookItemCollection;
 use App\Http\Resources\PhoneBookItemResource;
 use App\Models\PhoneBookItem;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PhoneBookItemController extends Controller
 {
@@ -15,7 +17,34 @@ class PhoneBookItemController extends Controller
      */
     public function index()
     {
-        //
+        $perPage = request()->has('per_page') ? (int) request()->input('per_page') : 10;
+        $orderArray = ['id', 'desc'];
+
+        if (request()->has('sort_by')) {
+            $tmpOrderArray = Str::of(request()->input('sort_by'))->explode('.');
+
+            if (count($tmpOrderArray) == 2) {
+                $orderArray = $tmpOrderArray;
+            }
+        }
+
+        $phoneBookItems = new PhoneBookItem();
+
+        if (request()->has('search') && is_string(request()->input('search'))) {
+            $searchTerm = request()->input('search');
+            $phoneBookItems = $phoneBookItems->where(function($query) use ($searchTerm) {
+                $query->where('id', $searchTerm);
+                $query->orWhere('first_name', 'LIKE', '%' . $searchTerm . '%');
+                $query->orWhere('last_name', 'LIKE', '%' . $searchTerm . '%');
+                $query->orWhere('country_code', 'LIKE', '%' . $searchTerm . '%');
+                $query->orWhere('timezone', 'LIKE', '%' . $searchTerm . '%');
+            });
+        }
+
+        $phoneBookItems = $phoneBookItems->orderBy($orderArray[0], $orderArray[1]);
+        // logger($phoneBookItems->toSql(), $phoneBookItems->getBindings());
+        $phoneBookItems = $phoneBookItems->paginate($perPage);
+        return new PhoneBookItemCollection($phoneBookItems);
     }
 
     /**
@@ -65,7 +94,7 @@ class PhoneBookItemController extends Controller
      */
     public function show(PhoneBookItem $phoneBookItem)
     {
-        //
+        return $this->respondWithSuccess(new PhoneBookItemResource($phoneBookItem));
     }
 
     /**
@@ -81,6 +110,12 @@ class PhoneBookItemController extends Controller
      */
     public function destroy(PhoneBookItem $phoneBookItem)
     {
-        //
+        try {
+            $phoneBookItem->delete();
+        } catch (\Throwable $e) {
+            return $this->respondError(__('Could not delete the phonebook item, please try again later'));
+        }
+
+        return $this->respondOk();
     }
 }
