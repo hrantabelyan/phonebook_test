@@ -19,6 +19,7 @@ class PhoneBookItemResource extends JsonResource
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
             'country_code' => $this->country_code,
+            'timezone' => $this->timezone,
             'phone_numbers' => $this->numbers->pluck('number'),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),

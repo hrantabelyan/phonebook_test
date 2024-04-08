@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('last_name')->nullable();
             $table->char('country_code', 2)->nullable();
+            $table->string('timezone', 50)->nullable();
             $table->dateTime('deleted_at')->nullable();
             $table->dateTime('created_at');
             $table->dateTime('updated_at');
