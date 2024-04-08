@@ -59,6 +59,7 @@ class PhoneBookItemController extends Controller
                 'first_name',
                 'last_name',
                 'country_code',
+                'timezone',
             ]));
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -102,7 +103,14 @@ class PhoneBookItemController extends Controller
      */
     public function update(UpdatePhoneBookItemRequest $request, PhoneBookItem $phoneBookItem)
     {
-        //
+        try {
+            $phoneBookItem->update($request->validated());
+            $phoneBookItem->save();
+        } catch (\Exception $e) {
+            return $this->respondError(__('Could not update the item, please try again later'));
+        }
+
+        return $this->respondWithSuccess(new PhoneBookItemResource($phoneBookItem));
     }
 
     /**

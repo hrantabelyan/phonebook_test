@@ -56,7 +56,7 @@ class StorePhoneBookItemRequest extends ApiRequest
             ],
             'phone_numbers.*' => [
                 'phone:INTERNATIONAL',
-                Rule::unique('phone_book_item_numbers', 'number'),
+                Rule::unique('phone_book_item_numbers', 'number')->whereNull('deleted_at'),
             ],
         ];
     }
